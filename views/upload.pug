@@ -1,0 +1,64 @@
+extends layout
+
+block content
+  h1= title
+  p Welcome to #{title}
+
+  div
+    input(type="file", name="fileUpload", id="fileUpload")
+    input(type="button", value="Upload", id="btn-upload")
+  div#uploadProses
+  div#uploadStatus
+
+  script(src="/javascripts/jquery.min.js")
+  script.
+    $(()=>{
+      $('#btn-upload').click(()=>{
+        var formData = new FormData();
+        formData.append('fileUpload', $('#fileUpload')[0].files[0]);
+
+        $.ajax({
+          url: '/upload.html',
+          method: 'post',
+          data: formData,
+          processData: false,
+          contentType: false,
+          cache: false,
+          timeout: 600000,
+          beforeSend: changeUploadStatus('Sedang di upload, mohon tunggu...'),
+          xhr: () =>{
+            var xhr = new window.XMLHttpRequest();
+            xhr.upload.addEventListener("progress", function(evt){
+              if(evt.lengthComputable){
+                var percenComplete = evt.loaded / evt.total;
+                changeUploadProses( "Upload "+ (Math.round(percenComplete*100)) + "%." );
+              }
+            }, false);
+            xhr.addEventListener("progress", function(evt){
+              if(evt.lengthComputable){
+                var percenComplete = evt.loaded / evt.total;
+                changeUploadProses( "Download " + (Math.round(percenComplete*100)) + "%." );
+              }
+            }, false);
+            return xhr;
+          },
+          success: (data)=>{
+            console.log('Berhasil');
+            console.log(data);
+            changeUploadStatus('Upload Berhasil.');
+          },
+          error: (err)=>{
+            console.log('Gagal');
+            console.log(err);
+            changeUploadStatus('Upload Gagal.');
+          }
+        })
+      });
+
+      function changeUploadStatus(status){
+        $('#uploadStatus').html(status);
+      }
+      function changeUploadProses(proses){
+        $('#uploadProses').html(proses);
+      }
+    });

@@ -1,0 +1,74 @@
+extends layout
+
+block content
+  h1= title
+  p Welcome to #{title}
+
+  a(href="/upload.html") Upload
+
+  //- div
+  //-   form#iniForm
+  //-     input(type="file", name="fileContoh", id="fileContoh")
+  //-     input(type="button", value="Upload", id='btn-upload')
+  //-   div#uploadStatus
+  //-   div#uploadProgress
+  
+  script(src="https://ajax.googleapis.com/ajax/libs/jquery/2.2.4/jquery.min.js")
+  script.
+    function uploadStatus(status){
+      $('#uploadStatus').html(status);
+    }
+    $(function(){
+      $('#btn-upload').click(()=>{
+        $('#btn-upload').prop('disabled', true);
+        
+        var dataForm = new FormData();
+        dataForm.append('fileContoh', $('#fileContoh')[0].files[0]);
+
+        $.ajax({
+          url:'/',
+          method: 'post',
+          enctype: 'multipart/form-data',
+          data: dataForm,
+          processData: false,
+          contentType: false,
+          cache: false,
+          timeout: 600000,
+          beforeSend: uploadStatus('Sedang di upload, mohon bersabar...'),
+          xhr: () => {
+            var xhr = new window.XMLHttpRequest();
+
+            xhr.upload.addEventListener("progress", function(evt){
+              if(evt.lengthComputable){
+                var percenComplete = evt.loaded / evt.total;
+                $('#uploadProgress').html( "Upload "+ (Math.round(percenComplete*100)) + "%." );
+              }
+            }, false);
+
+            xhr.addEventListener("progress", function(evt){
+              if(evt.lengthComputable){
+                var percenComplete = evt.loaded / evt.total;
+                $('#uploadProgress').html( "Download " + (Math.round(percenComplete*100)) + "%." );
+              }
+            }, false);
+            return xhr;
+          },
+
+          success: (data) => {
+            console.log('Berhasil');
+            console.log(data);
+            contentHTML = "<p>Upload "+data.name+" berhasil</p>";
+            contentHTML += "<a href='/"+data.name+"' target='__blank'>"+data.name+"</a>";
+            uploadStatus(contentHTML);
+            $('#btn-upload').prop('disabled', false);
+          },
+
+          error: (e)=>{
+            console.log('Error');
+            console.log(e);
+            uploadStatus('Upload Gagal!');
+            $('#btn-upload').prop('disabled', false);
+          }
+        })
+      })
+    })
